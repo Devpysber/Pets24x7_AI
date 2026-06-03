@@ -1,0 +1,84 @@
+// Listings index — loaded into memory at boot from ../pets24x7_new/data/*.json
+// Powers the vendor-claim phone-match flow without putting 34k rows in Postgres.
+
+import { readdir, readFile } from 'node:fs/promises';
+import path from 'node:path';
+import { env } from '../env.js';
+import { logger } from '../logger.js';
+import { lastDigits } from '../shared/phone.js';
+
+export interface ListingRecord {
+  id: string;
+  name: string;
+  category: string;
+  category_slug: string;
+  category_icon?: string;
+  city: string;
+  city_slug: string;
+  state?: string;
+  country: 'IN' | 'US' | string;
+  address?: string;
+  phone?: string;
+  website?: string;
+  pincode?: string;
+  rating: number;
+  review_count: number;
+  google_cid?: string;
+  gmb_link?: string;
+}
+
+// In-memory shape: map last-10-digits → list of listings (collisions exist
+// because same scrape phone can be re-listed under multiple categories).
+const phoneIndex = new Map<string, ListingRecord[]>();
+const byId = new Map<string, ListingRecord>();
+
+let booted = false;
+
+export async function initListingsIndex(): Promise<void> {
+  const dir = path.resolve(env.STATIC_DATA_DIR);
+  let files: string[];
+  try {
+    files = (await readdir(dir)).filter((f) => f.endsWith('.json'));
+  } catch (err) {
+    logger.warn({ err, dir }, 'listings index: data dir not found, vendor claim by phone will return empty matches');
+    booted = true;
+    return;
+  }
+
+  let total = 0;
+  for (const f of files) {
+    try {
+      const raw = await readFile(path.join(dir, f), 'utf8');
+      const arr = JSON.parse(raw) as ListingRecord[];
+      for (const r of arr) {
+        byId.set(r.id, r);
+        if (!r.phone) continue;
+        const k = lastDigits(r.phone, 10);
+        if (!k || k.length < 10) continue;
+        const bucket = phoneIndex.get(k);
+        if (bucket) bucket.push(r);
+        else phoneIndex.set(k, [r]);
+        total++;
+      }
+    } catch (err) {
+      logger.warn({ err, file: f }, 'listings index: skip unparseable file');
+    }
+  }
+  booted = true;
+  logger.info(`listings index loaded: ${byId.size} unique listings · ${phoneIndex.size} distinct phones · ${total} phone refs`);
+}
+
+export function findListingByPhone(phone: string): ListingRecord[] {
+  if (!booted) return [];
+  const k = lastDigits(phone, 10);
+  if (k.length < 10) return [];
+  return phoneIndex.get(k) ?? [];
+}
+
+export function getListingById(id: string): ListingRecord | undefined {
+  return byId.get(id);
+}
+
+export function indexStats() {
+  return { booted, listings: byId.size, phones: phoneIndex.size };
+}

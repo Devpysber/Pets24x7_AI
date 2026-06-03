@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#2563EB" />
+<title>Vendor Dashboard — Pets24x7.com</title>
+<meta name="robots" content="noindex" />
+<link rel="icon" type="image/png" href="/pets24x7_logo.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root{--primary:#2563EB;--primary-dark:#1D4ED8;--primary-light:#EFF6FF;--bg:#F9FAFB;--text:#1F2937;--text-muted:#6B7280;--border:#E5E7EB;--success:#10B981;--danger:#DC2626;--warning:#F59E0B;}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',sans-serif;color:var(--text);background:var(--bg);font-size:15px;-webkit-font-smoothing:antialiased;line-height:1.5}
+  a{color:var(--primary);text-decoration:none}a:hover{text-decoration:underline}
+  .hdr{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid var(--border);padding:14px 24px;display:flex;justify-content:space-between;align-items:center}
+  .brand{display:inline-flex;align-items:center;gap:10px}
+  .brand-logo{width:32px;height:32px;border-radius:8px}
+  .brand-name{font-weight:800;font-size:20px;color:var(--primary);letter-spacing:-0.5px}
+  .brand-name .tld{color:var(--text)}
+  .hdr-right{display:flex;align-items:center;gap:14px}
+  .who{font-size:13px;color:var(--text-muted)}.who strong{color:var(--text);font-weight:600}
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:1px solid var(--border);background:#fff;color:var(--text);border-radius:8px;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;text-decoration:none}
+  .btn:hover{background:#F9FAFB;text-decoration:none}
+  .btn-primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+  .btn-primary:hover{background:var(--primary-dark);color:#fff}
+  .container{max-width:1080px;margin:0 auto;padding:32px 24px}
+
+  /* Status banner */
+  .banner{padding:16px 20px;border-radius:12px;margin-bottom:24px;display:flex;align-items:center;gap:14px;font-size:14px}
+  .banner .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+  .banner.pending{background:#FEF3C7;color:#92400E;border:1px solid #FCD34D}.banner.pending .dot{background:#F59E0B}
+  .banner.active{background:#DCFCE7;color:#166534;border:1px solid #86EFAC}.banner.active .dot{background:#10B981}
+  .banner.rejected{background:#FEE2E2;color:#991B1B;border:1px solid #FCA5A5}.banner.rejected .dot{background:#DC2626}
+  .banner.suspended{background:#F3E8FF;color:#6B21A8;border:1px solid #D8B4FE}.banner.suspended .dot{background:#A855F7}
+  .banner strong{font-weight:800}
+
+  .grid{display:grid;gap:20px;grid-template-columns:1fr;margin-bottom:24px}
+  @media(min-width:880px){.grid{grid-template-columns:1.4fr 1fr}}
+  .card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:24px}
+  .card h2{font-size:16px;font-weight:700;margin-bottom:16px}
+
+  /* Listing card */
+  .listing{display:flex;flex-direction:column;gap:8px}
+  .listing .name{font-size:22px;font-weight:800;letter-spacing:-0.3px;line-height:1.2}
+  .listing .meta{font-size:13px;color:var(--text-muted)}
+  .rating-row{display:flex;align-items:center;gap:8px;margin-top:4px}
+  .rating-pill{background:var(--success);color:#fff;padding:3px 8px;border-radius:6px;font-size:12px;font-weight:700}
+  .gpill{font-size:12px;color:var(--text-muted);font-weight:600}
+  .listing-meta{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:14px;font-size:13px}
+  .listing-meta div{padding:10px 12px;background:var(--bg);border-radius:8px}
+  .listing-meta strong{display:block;font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;font-weight:700;margin-bottom:2px}
+
+  /* Completion */
+  .pct{display:flex;align-items:baseline;gap:10px;margin-bottom:8px}
+  .pct .n{font-size:38px;font-weight:800;color:var(--primary);letter-spacing:-1px;line-height:1}
+  .pct .lbl{font-size:13px;color:var(--text-muted)}
+  .bar{height:8px;background:var(--bg);border-radius:999px;overflow:hidden;margin-bottom:18px}
+  .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--primary),var(--success));border-radius:999px;transition:width 0.4s}
+  .check{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px}
+  .check:last-child{border:none}
+  .check .box{width:22px;height:22px;border-radius:6px;border:2px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:transparent}
+  .check.done .box{background:var(--success);border-color:var(--success);color:#fff}
+  .check.done span.lbl{color:var(--text-muted);text-decoration:line-through}
+  .check span.lbl{flex:1;font-weight:600}
+  .check .w{font-size:11px;color:var(--text-light);font-weight:700}
+
+  /* Profile editor */
+  .profile-form label{display:block;font-size:12px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;margin-top:14px}
+  .profile-form input{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:14px;background:#fff;font-weight:500}
+  .profile-form input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,0.12)}
+  .profile-form .row{display:flex;gap:8px;margin-top:14px}
+  .profile-form .row .btn{flex:1;justify-content:center}
+
+  .placeholder{padding:18px;background:linear-gradient(135deg,#EFF6FF,#ECFDF5);border-radius:12px;color:var(--text-muted);font-size:13px;line-height:1.6}
+  .placeholder strong{display:block;color:var(--text);font-size:14px;margin-bottom:4px}
+  .placeholder .phase{display:inline-block;font-size:10px;font-weight:800;color:#92400E;background:#FEF3C7;padding:2px 8px;border-radius:999px;text-transform:uppercase;letter-spacing:0.5px;margin-left:6px;vertical-align:middle}
+
+  .ok{background:#DCFCE7;color:#166534;border-radius:8px;padding:10px 14px;font-size:13px;font-weight:600;margin-top:14px;display:none}
+  .ok.show{display:block}
+  .err{background:#FEE2E2;color:#991B1B;border-radius:8px;padding:10px 14px;font-size:13px;font-weight:600;margin-top:14px;display:none}
+  .err.show{display:block}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <a href="/" class="brand">
+    <img class="brand-logo" src="/pets24x7_logo.png" alt="" />
+    <span class="brand-name">Pets24x7<span class="tld">.com</span></span>
+  </a>
+  <div class="hdr-right">
+    <span class="who" id="who"></span>
+    <a class="btn" id="viewLive" target="_blank" rel="noopener" href="#">View live page &rarr;</a>
+    <button class="btn" id="logoutBtn">Sign out</button>
+  </div>
+</header>
+
+<main class="container">
+  <div id="banner"></div>
+
+  <div class="grid">
+    <!-- Left: Listing card + profile -->
+    <section>
+      <div class="card" id="listingCard" style="margin-bottom:20px">
+        <h2>Your listing</h2>
+        <div class="listing" id="listingBody"><p style="color:var(--text-muted)">Loading&hellip;</p></div>
+      </div>
+
+      <div class="card profile-form">
+        <h2>Business profile</h2>
+        <label>Business name</label>
+        <input id="fName" type="text" />
+        <label>Business email</label>
+        <input id="fEmail" type="email" placeholder="you@business.com" />
+        <div class="err" id="pErr"></div>
+        <div class="ok" id="pOk">Saved.</div>
+        <div class="row">
+          <button class="btn btn-primary" id="saveBtn">Save changes</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right: Completion + sidebar -->
+    <section>
+      <div class="card" style="margin-bottom:20px">
+        <h2>Profile completion</h2>
+        <div class="pct"><span class="n" id="pctN">0%</span><span class="lbl">complete</span></div>
+        <div class="bar"><i id="pctBar" style="width:0%"></i></div>
+        <div id="checklist"></div>
+      </div>
+
+      <div class="card" style="margin-bottom:20px">
+        <h2>Reviews &amp; customer invites <span class="placeholder phase">Phase 3</span></h2>
+        <div class="placeholder">
+          <strong>Send review requests</strong>
+          Invite past customers via WhatsApp to leave you a Google review. You&rsquo;ll be able to track who opened, who reviewed, and your rating climb.
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:20px">
+        <h2>Run an ad <span class="placeholder phase">Phase 4</span></h2>
+        <div class="placeholder">
+          <strong>Connect Instagram &amp; Facebook</strong>
+          Draft an ad here. We&rsquo;ll review and publish via Meta Marketing API to your own Ads account. You stay in control of the spend.
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Customer invites <span class="placeholder phase">Phase 2</span></h2>
+        <div class="placeholder">
+          <strong>Bring your customers to Pets24x7</strong>
+          Generate a shareable QR code &amp; WhatsApp link. Customers join, get member deals, you get loyalty data.
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script src="/config.js"></script>
+<script src="/api-client.js"></script>
+<script>
+  function esc(s){return (s||'').toString().replace(/[<>&"]/g,function(c){return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c];})}
+
+  function showBanner(status, vendor) {
+    var msgs = {
+      PENDING: '<strong>Awaiting admin approval.</strong> Your claim is being reviewed by the Pets24x7 team — usually within 24 hours. You can keep editing your profile in the meantime.',
+      ACTIVE: '<strong>Active vendor.</strong> Your listing is verified. Use the checklist on the right to unlock more features.',
+      REJECTED: '<strong>Claim rejected.</strong>' + (vendor.rejectedReason ? ' Reason: ' + esc(vendor.rejectedReason) : '') + ' <a href="https://wa.me/919930090487" target="_blank">Message us</a> to resolve.',
+      SUSPENDED: '<strong>Account suspended.</strong> Contact admin via <a href="https://wa.me/919930090487" target="_blank">WhatsApp</a> to restore access.'
+    };
+    document.getElementById('banner').innerHTML =
+      '<div class="banner ' + status.toLowerCase() + '"><span class="dot"></span><div>' + msgs[status] + '</div></div>';
+  }
+
+  function renderListing(l, vendor) {
+    if (!l) {
+      document.getElementById('listingBody').innerHTML = '<p style="color:var(--text-muted)">Listing details unavailable.</p>';
+      return;
+    }
+    var url = '/' + (l.country||'in').toLowerCase() + '/' + l.city_slug + '/' + l.id + '/';
+    document.getElementById('viewLive').href = url;
+    document.getElementById('listingBody').innerHTML =
+      '<div class="name">' + esc(l.name) + '</div>' +
+      '<div class="meta">' + esc(l.category) + ' &middot; ' + esc(l.city) + (l.state ? ', ' + esc(l.state) : '') + '</div>' +
+      '<div class="rating-row">' +
+        '<span class="rating-pill">&starf; ' + (l.rating || 0).toFixed(1) + '</span>' +
+        '<span class="gpill">' + (l.review_count || 0) + ' Google reviews</span>' +
+      '</div>' +
+      '<div class="listing-meta">' +
+        '<div><strong>Address</strong>' + esc(l.address || '—') + '</div>' +
+        '<div><strong>Phone</strong>' + esc(l.phone || vendor.phone || '—') + '</div>' +
+        '<div><strong>' + ((l.country||'IN')==='IN' ? 'PIN code' : 'ZIP code') + '</strong>' + esc(l.pincode || '—') + '</div>' +
+        '<div><strong>Listing ID</strong><span style="font-family:monospace;font-size:12px">' + esc(l.id.slice(0,18)) + '&hellip;</span></div>' +
+      '</div>';
+  }
+
+  function renderChecklist(completion) {
+    document.getElementById('pctN').textContent = completion.percent + '%';
+    document.getElementById('pctBar').style.width = completion.percent + '%';
+    document.getElementById('checklist').innerHTML = completion.checklist.map(function (c) {
+      return '<div class="check ' + (c.done ? 'done' : '') + '">' +
+        '<div class="box">' + (c.done ? '&#10003;' : '') + '</div>' +
+        '<span class="lbl">' + esc(c.label) + '</span>' +
+        '<span class="w">+' + c.weight + '</span>' +
+      '</div>';
+    }).join('');
+  }
+
+  function load() {
+    api.vendorDashboard().then(function(d) {
+      document.getElementById('who').innerHTML = 'Hi <strong>' + esc(d.vendor.businessName) + '</strong>';
+      document.getElementById('fName').value  = d.vendor.businessName || '';
+      document.getElementById('fEmail').value = d.vendor.email || '';
+      showBanner(d.vendor.status, d.vendor);
+      renderListing(d.listing, d.vendor);
+      renderChecklist(d.completion);
+    }).catch(function(){ location.href = '/vendor-login/'; });
+  }
+
+  document.getElementById('saveBtn').addEventListener('click', function() {
+    var pErr = document.getElementById('pErr');
+    var pOk  = document.getElementById('pOk');
+    pErr.classList.remove('show'); pOk.classList.remove('show');
+    var body = {
+      businessName: document.getElementById('fName').value.trim() || undefined,
+      email: document.getElementById('fEmail').value.trim() || undefined
+    };
+    this.disabled = true;
+    var self = this;
+    api.vendorPatch(body).then(function(){ pOk.classList.add('show'); load(); setTimeout(function(){pOk.classList.remove('show')}, 1800); })
+      .catch(function(e){ pErr.textContent = fmtErr(e); pErr.classList.add('show'); })
+      .finally(function(){ self.disabled = false; });
+  });
+
+  document.getElementById('logoutBtn').addEventListener('click', function() {
+    api.logout().finally(function(){ location.href = '/'; });
+  });
+
+  load();
+</script>
+
+</body>
+</html>
