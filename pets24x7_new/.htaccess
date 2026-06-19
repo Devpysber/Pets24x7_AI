@@ -53,6 +53,17 @@ DirectoryIndex index.html
   RewriteRule ^US/(.*)$ /us/$1 [L,R=301]
 </IfModule>
 
+# Phase 3.1 — Review short-link routing.
+#   /review/<CODE>/         -> /review/index.html?code=<CODE>
+#   /review/<CODE>/form/    -> /review/form/index.html?code=<CODE>
+#   /review/<CODE>/thanks/  -> /review/thanks/index.html?code=<CODE>
+# Codes are 4-16 chars of A-Z0-9 (build_id format from src/reviews/vendor.routes.ts).
+<IfModule mod_rewrite.c>
+  RewriteRule ^review/([A-Z0-9]{4,16})/?$              /review/index.html?code=$1        [L,QSA]
+  RewriteRule ^review/([A-Z0-9]{4,16})/form/?$         /review/form/index.html?code=$1   [L,QSA]
+  RewriteRule ^review/([A-Z0-9]{4,16})/thanks/?$       /review/thanks/index.html?code=$1 [L,QSA]
+</IfModule>
+
 # -------------------------------------------------------------------
 # 3. Custom 404
 # -------------------------------------------------------------------

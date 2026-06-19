@@ -26,4 +26,8 @@ Disallow: /dashboard/
 # Return page is private (per-txn); /membership/ landing IS indexable.
 Disallow: /membership/return/
 
+# Review-request landing + form + thanks — private per-customer surface
+Disallow: /review/
+Disallow: /r/
+
 Sitemap: https://pets24x7.com/sitemap.xml

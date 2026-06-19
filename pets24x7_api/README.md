@@ -53,13 +53,27 @@ The server expects the static frontend's `data/` folder next door (`../pets24x7_
    - `WA_PHONE_NUMBER_ID`   (under "From")
    - `WA_BUSINESS_ACCOUNT_ID` (top of the page)
    - `WA_ACCESS_TOKEN`
-4. **Message Templates → Create template**:
+4. **Message Templates → Create template** (you need TWO templates):
+
+   **a. OTP login template:**
    - Category: **Authentication**
    - Name: `pets24x7_otp` (matches `WA_OTP_TEMPLATE_NAME`)
    - Language: English (matches `WA_OTP_TEMPLATE_LANG`)
    - Body: `Your Pets24x7 verification code is {{1}}. It expires in 10 minutes.`
    - Add a "Copy code" button (Authentication template auto-supports this).
    - Submit for approval — Meta usually approves authentication templates in < 1 hour.
+
+   **b. Review-request template (Phase 3.1):**
+   - Category: **Marketing** (or Utility — Marketing has stricter rules but is fine here)
+   - Name: `pets24x7_review_request` (matches `WA_REVIEW_TEMPLATE_NAME`)
+   - Language: English
+   - Body: `Hi {{1}}! How was your recent visit to {{2}}? Help other pet parents find them — leave a quick review here (1 tap): {{3}}`
+   - Three variables:
+     - `{{1}}` → customer name (e.g. "Priya")
+     - `{{2}}` → business name (e.g. "Furry Tails Vet")
+     - `{{3}}` → short-link (e.g. `https://pets24x7.com/r/A1B2C3D4`)
+   - No buttons needed (link is in body).
+   - Marketing templates take 24-48 hours for approval.
 5. **Webhooks** (after the API is deployed):
    - Callback URL: `https://api.pets24x7.com/api/whatsapp/webhook`
    - Verify Token: same value you set as `WA_VERIFY_TOKEN`

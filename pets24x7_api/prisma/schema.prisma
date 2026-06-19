@@ -84,6 +84,10 @@ model Vendor {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
+  // Phase 3.1 — inverse relations
+  reviewRequests ReviewRequest[]
+  reviews        Review[]
+
   @@index([status])
   @@index([country, city])
   @@map("vendors")
@@ -325,4 +329,75 @@ enum PaymentStatus {
   FAILED
   REFUNDED
   CANCELLED
+}
+
+// -----------------------------------------------------------
+// Reviews (Phase 3.1)
+// -----------------------------------------------------------
+
+// Vendor sends WhatsApp review-request to a past customer.
+// Short-link /r/<code> tracks open + choice + completion.
+model ReviewRequest {
+  id           String  @id @default(cuid())
+  vendorId     String
+  vendor       Vendor  @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  // 10-char URL-safe code that appears in the WA link (/r/<code>)
+  code         String  @unique
+  customerName  String?
+  customerPhone String
+  // Lifecycle
+  sentAt          DateTime  @default(now())
+  openedAt        DateTime?
+  choiceMadeAt    DateTime?
+  choice          ReviewChoice?
+  reviewSubmittedAt DateTime?
+  // Tracking
+  ipAddress    String?
+  userAgent    String?
+  // Optional link to the Pets24x7-hosted review (only if choice = PETS24X7)
+  reviewId     String? @unique
+  review       Review? @relation(fields: [reviewId], references: [id])
+  // WA delivery
+  waMessageId  String?
+
+  @@index([vendorId, sentAt])
+  @@index([customerPhone])
+  @@map("review_requests")
+}
+
+enum ReviewChoice {
+  GOOGLE
+  PETS24X7
+}
+
+// Pets24x7-hosted review (independent of Google).
+// Vendor's listing page can render these (after admin moderation publishes them).
+model Review {
+  id           String   @id @default(cuid())
+  vendorId     String
+  vendor       Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  // Inverse — set when ReviewRequest.reviewId points here
+  request      ReviewRequest?
+  // Content
+  reviewerName  String
+  reviewerPhone String?       // captured from ReviewRequest if known; nullable for spontaneous reviews
+  rating       Int           // 1-5
+  text         String
+  // Moderation
+  status       ReviewStatus  @default(PENDING)
+  moderatedBy  String?
+  moderatedAt  DateTime?
+  moderationReason String?
+  createdAt    DateTime @default(now())
+
+  @@index([vendorId, status])
+  @@index([status])
+  @@map("reviews")
+}
+
+enum ReviewStatus {
+  PENDING       // awaits admin moderation
+  PUBLISHED
+  REJECTED
+  HIDDEN        // admin un-published (TOS violation reported later)
 }

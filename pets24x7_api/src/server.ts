@@ -23,6 +23,8 @@ import { listingsRouter } from './listings/lookup.routes.js';
 import { initListingsIndex } from './listings/index.js';
 import { membershipRouter } from './payments/membership.routes.js';
 import { phonepeRouter } from './payments/phonepe.routes.js';
+import { vendorReviewsRouter } from './reviews/vendor.routes.js';
+import { reviewShortLinkRouter, reviewPublicApiRouter } from './reviews/public.routes.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -62,6 +64,9 @@ app.use('/api/listings', listingsRouter);
 app.use('/api/whatsapp', whatsappRouter);
 app.use('/api/memberships', membershipRouter);
 app.use('/api/payments/phonepe', phonepeRouter);
+app.use('/api/vendor/reviews', vendorReviewsRouter);
+app.use('/api/reviews', reviewPublicApiRouter);
+app.use('/r', reviewShortLinkRouter);
 app.use('/admin', adminPanelRouter);
 
 // ---- 404 ----

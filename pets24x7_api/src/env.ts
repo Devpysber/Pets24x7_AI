@@ -22,8 +22,11 @@ const Env = z.object({
   WA_VERIFY_TOKEN: z.string().min(1),
   WA_OTP_TEMPLATE_NAME: z.string().default('pets24x7_otp'),
   WA_OTP_TEMPLATE_LANG: z.string().default('en'),
+  WA_REVIEW_TEMPLATE_NAME: z.string().default('pets24x7_review_request'),
+  WA_REVIEW_TEMPLATE_LANG: z.string().default('en'),
 
   STATIC_DATA_DIR: z.string().default('../pets24x7_new/data'),
+  PUBLIC_SHORTLINK_BASE: z.string().url().default('https://pets24x7.com'),
 
   // ---- PhonePe Payment Gateway ----
   PHONEPE_MODE: z.enum(['sandbox', 'production']).default('sandbox'),

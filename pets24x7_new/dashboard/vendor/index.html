@@ -132,10 +132,41 @@
       </div>
 
       <div class="card" style="margin-bottom:20px">
-        <h2>Reviews &amp; customer invites <span class="placeholder phase">Phase 3</span></h2>
-        <div class="placeholder">
-          <strong>Send review requests</strong>
-          Invite past customers via WhatsApp to leave you a Google review. You&rsquo;ll be able to track who opened, who reviewed, and your rating climb.
+        <h2>Review requests <span id="rrCount" style="color:var(--text-muted);font-weight:500;font-size:13px"></span></h2>
+
+        <div id="rrIntro" style="font-size:13px;color:var(--text-muted);margin-bottom:14px;line-height:1.6">
+          Paste up to 50 past-customer phones (one per line). They get a WhatsApp message with a 1-tap link to leave you a Google review.
+        </div>
+
+        <div id="rrCounts" style="display:none;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">
+          <div style="padding:10px 12px;background:var(--bg);border-radius:8px;text-align:center">
+            <div id="rrTotal" style="font-size:20px;font-weight:800;color:var(--primary)">0</div>
+            <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;font-weight:600">Sent</div>
+          </div>
+          <div style="padding:10px 12px;background:var(--bg);border-radius:8px;text-align:center">
+            <div id="rrOpened" style="font-size:20px;font-weight:800;color:var(--warning)">0</div>
+            <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;font-weight:600">Opened</div>
+          </div>
+          <div style="padding:10px 12px;background:var(--bg);border-radius:8px;text-align:center">
+            <div id="rrDone" style="font-size:20px;font-weight:800;color:var(--success)">0</div>
+            <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;font-weight:600">Reviewed</div>
+          </div>
+        </div>
+
+        <textarea id="rrInput" rows="4" maxlength="2000"
+          style="width:100%;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:inherit;font-size:13px;resize:vertical"
+          placeholder="+91 98765 43210
++91 98765 43211 — Priya
++91 98765 43212"></textarea>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:6px">Format: <code>phone</code> or <code>phone &mdash; Name</code>. Max 50 per day.</div>
+
+        <div class="err" id="rrErr" style="display:none;background:#FEE2E2;color:#991B1B;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:600;margin-top:10px"></div>
+        <div class="ok"  id="rrOk"  style="display:none;background:#DCFCE7;color:#166534;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:600;margin-top:10px"></div>
+        <button class="btn btn-primary" id="rrSend" style="margin-top:12px;width:100%">Send WhatsApp review requests &rarr;</button>
+
+        <div id="rrHistory" style="margin-top:18px;display:none">
+          <div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Recent sends</div>
+          <div id="rrList" style="max-height:240px;overflow-y:auto;border:1px solid var(--border);border-radius:8px"></div>
         </div>
       </div>
 
@@ -238,7 +269,95 @@
     api.logout().finally(function(){ location.href = '/'; });
   });
 
+  // -------------- Phase 3.1 — Review requests --------------
+  function parseCustomers(raw) {
+    var out = [];
+    var lines = (raw || '').split(/\r?\n/);
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i].trim();
+      if (!line) continue;
+      // Accept: "phone" OR "phone — name" OR "phone - name" OR "phone, name"
+      var m = line.match(/^([+\d][\d\s().+-]{5,})\s*(?:[—\-,:|])\s*(.+)?$/);
+      var phone, name;
+      if (m) { phone = m[1].trim(); name = (m[2] || '').trim() || undefined; }
+      else   { phone = line; }
+      // Validate
+      var digits = phone.replace(/[^0-9]/g, '');
+      if (digits.length < 10) continue;
+      out.push(name ? { phone: phone, name: name.slice(0, 60) } : { phone: phone });
+      if (out.length >= 50) break;
+    }
+    return out;
+  }
+
+  function fmtAgo(ts) {
+    var d = new Date(ts), now = new Date(), s = Math.max(0, (now - d) / 1000);
+    if (s < 60) return Math.floor(s) + 's ago';
+    if (s < 3600) return Math.floor(s/60) + 'm ago';
+    if (s < 86400) return Math.floor(s/3600) + 'h ago';
+    return Math.floor(s/86400) + 'd ago';
+  }
+
+  function renderRequests(data) {
+    var counts = data.counts || { total:0, opened:0, completed:0 };
+    document.getElementById('rrTotal').textContent  = counts.total;
+    document.getElementById('rrOpened').textContent = counts.opened;
+    document.getElementById('rrDone').textContent   = counts.completed;
+    document.getElementById('rrCount').textContent  = counts.total > 0 ? '· ' + counts.total + ' sent · ' + counts.opened + ' opened · ' + counts.completed + ' reviewed' : '';
+    var hasAny = (data.requests || []).length > 0;
+    document.getElementById('rrCounts').style.display = hasAny ? 'grid' : 'none';
+    document.getElementById('rrHistory').style.display = hasAny ? 'block' : 'none';
+    if (!hasAny) return;
+
+    document.getElementById('rrList').innerHTML = (data.requests || []).slice(0, 50).map(function (r) {
+      var status, color;
+      if (r.reviewSubmittedAt) { status = 'Reviewed ' + (r.choice === 'GOOGLE' ? '(Google)' : '(Pets24x7)'); color = '#166534'; }
+      else if (r.openedAt)     { status = 'Opened'; color = '#92400E'; }
+      else                     { status = 'Sent';   color = '#6B7280'; }
+      return '<div style="padding:10px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:13px">' +
+        '<div>' +
+          '<strong>' + esc(r.customerName || 'Customer') + '</strong> ' +
+          '<span style="color:var(--text-muted);font-family:monospace;font-size:12px">' + esc(r.customerPhone) + '</span>' +
+        '</div>' +
+        '<div style="text-align:right">' +
+          '<span style="font-weight:700;color:' + color + ';font-size:12px">' + status + '</span><br/>' +
+          '<span style="color:var(--text-muted);font-size:11px">' + fmtAgo(r.sentAt) + '</span>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  function loadRequests() {
+    api.vendorReviewRequests().then(renderRequests).catch(function(){});
+  }
+
+  document.getElementById('rrSend').addEventListener('click', function () {
+    var err = document.getElementById('rrErr');
+    var ok  = document.getElementById('rrOk');
+    err.style.display = 'none'; ok.style.display = 'none';
+    var raw = document.getElementById('rrInput').value;
+    var customers = parseCustomers(raw);
+    if (!customers.length) {
+      err.textContent = 'Add at least one phone number (10+ digits).';
+      err.style.display = 'block'; return;
+    }
+    this.disabled = true; this.textContent = 'Sending ' + customers.length + '...';
+    var self = this;
+    api.vendorReviewRequestBulk(customers).then(function (r) {
+      ok.textContent = r.sent + ' sent. ' + (r.failed ? r.failed + ' failed. ' : '') + r.dailyRemaining + ' remaining today.';
+      ok.style.display = 'block';
+      document.getElementById('rrInput').value = '';
+      loadRequests();
+    }).catch(function (e) {
+      err.textContent = fmtErr(e);
+      err.style.display = 'block';
+    }).finally(function () {
+      self.disabled = false; self.textContent = 'Send WhatsApp review requests →';
+    });
+  });
+
   load();
+  loadRequests();
 </script>
 
 </body>

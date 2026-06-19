@@ -54,6 +54,37 @@ export async function sendOtpTemplate(phone: string, code: string): Promise<{ me
   return { messageId: data.messages?.[0]?.id ?? '' };
 }
 
+// Vendor → past-customer review request. Uses approved Marketing template.
+// Variables: {{1}} customer name, {{2}} business name, {{3}} short-link URL.
+export async function sendReviewRequestTemplate(
+  phone: string,
+  customerName: string,
+  businessName: string,
+  shortLinkUrl: string,
+): Promise<{ messageId: string }> {
+  const to = normalizePhone(phone).replace(/^\+/, '');
+  const data = await postMessage({
+    messaging_product: 'whatsapp',
+    to,
+    type: 'template',
+    template: {
+      name: env.WA_REVIEW_TEMPLATE_NAME,
+      language: { code: env.WA_REVIEW_TEMPLATE_LANG },
+      components: [
+        {
+          type: 'body',
+          parameters: [
+            { type: 'text', text: customerName.slice(0, 60) },
+            { type: 'text', text: businessName.slice(0, 60) },
+            { type: 'text', text: shortLinkUrl },
+          ],
+        },
+      ],
+    },
+  });
+  return { messageId: data.messages?.[0]?.id ?? '' };
+}
+
 // Plain text — works only with users who messaged us in the last 24h (the
 // "service window"). Useful for transactional replies, NOT for OTP cold-sends.
 export async function sendText(phone: string, body: string): Promise<{ messageId: string }> {

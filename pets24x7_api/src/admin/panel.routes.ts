@@ -161,6 +161,59 @@ adminPanelRouter.get(
   }),
 );
 
+// ----- Reviews moderation -----
+adminPanelRouter.get(
+  '/reviews',
+  requireAdminPage,
+  asyncHandler(async (req, res) => {
+    const status = (req.query.status as string) || 'PENDING';
+    const safe = ['PENDING','PUBLISHED','REJECTED','HIDDEN'].includes(status) ? status : 'PENDING';
+    const reviews = await prisma.review.findMany({
+      where: { status: safe as any },
+      orderBy: { createdAt: 'desc' },
+      take: 200,
+      include: { vendor: true },
+    });
+    const [pending, published, rejected] = await Promise.all([
+      prisma.review.count({ where: { status: 'PENDING' } }),
+      prisma.review.count({ where: { status: 'PUBLISHED' } }),
+      prisma.review.count({ where: { status: 'REJECTED' } }),
+    ]);
+    res.render('reviews', { status: safe, reviews, counts: { pending, published, rejected } });
+  }),
+);
+
+adminPanelRouter.post(
+  '/reviews/:id/publish',
+  requireAdminPage,
+  asyncHandler(async (req: any, res) => {
+    await prisma.review.update({
+      where: { id: req.params.id },
+      data: { status: 'PUBLISHED', moderatedBy: req.auth.sub, moderatedAt: new Date() },
+    });
+    await prisma.auditLog.create({
+      data: { actorType: 'ADMIN', actorId: req.auth.sub, action: 'review.publish', meta: { reviewId: req.params.id }, ipAddress: req.ip ?? null },
+    });
+    res.redirect('/admin/reviews?status=PENDING');
+  }),
+);
+
+adminPanelRouter.post(
+  '/reviews/:id/reject',
+  requireAdminPage,
+  asyncHandler(async (req: any, res) => {
+    const reason = String(req.body?.reason ?? '').slice(0, 240);
+    await prisma.review.update({
+      where: { id: req.params.id },
+      data: { status: 'REJECTED', moderationReason: reason || null, moderatedBy: req.auth.sub, moderatedAt: new Date() },
+    });
+    await prisma.auditLog.create({
+      data: { actorType: 'ADMIN', actorId: req.auth.sub, action: 'review.reject', meta: { reviewId: req.params.id, reason }, ipAddress: req.ip ?? null },
+    });
+    res.redirect('/admin/reviews?status=PENDING');
+  }),
+);
+
 // ----- Payments log -----
 adminPanelRouter.get(
   '/payments',

@@ -69,6 +69,16 @@
     vendorListing:    function ()                        { return req('GET',  '/api/vendor/listing'); },
     vendorPatch:      function (p)                       { return req('PATCH','/api/vendor/profile', p); },
 
+    // Vendor reviews (Phase 3.1)
+    vendorReviewRequests:     function ()              { return req('GET',  '/api/vendor/reviews/requests'); },
+    vendorReviewRequestBulk:  function (customers)     { return req('POST', '/api/vendor/reviews/requests/bulk', { customers: customers }); },
+    vendorReviewsCollected:   function ()              { return req('GET',  '/api/vendor/reviews'); },
+
+    // Public review APIs (no auth)
+    reviewContext:    function (code)                    { return req('GET',  '/api/reviews/' + encodeURIComponent(code)); },
+    reviewChoose:     function (code, choice)            { return req('POST', '/api/reviews/' + encodeURIComponent(code) + '/choose', { choice: choice }); },
+    reviewSubmit:     function (code, payload)           { return req('POST', '/api/reviews/' + encodeURIComponent(code) + '/submit', payload); },
+
     // Memberships + payments
     membershipPlans:    function ()        { return req('GET',  '/api/memberships/plans'); },
     membershipMe:       function ()        { return req('GET',  '/api/memberships/me'); },
